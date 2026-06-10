@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<link rel="manifest" href="/manifest.json"/>
+<title>My Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #F5F5F7;
+  --bg2:      #FFFFFF;
+  --bg3:      #E8E8ED;
+  --border:   rgba(0,0,0,0.08);
+  --border2:  rgba(0,0,0,0.14);
+  --text:     #1C1C1E;
+  --text2:    #6E6E73;
+  --text3:    #AEAEB2;
+  --accent:   #7B6EF6;
+  --accent2:  #5E50E0;
+  --google:   #4F9CF9;
+  --teams:    #7B6EF6;
+  --notion:   #63C8A0;
+  --gmail:    #F4845F;
+  --sun:      #FFBE45;
+  --rain:     #4F9CF9;
+  --font:     'Outfit', sans-serif;
+  --mono:     'DM Mono', monospace;
+  --radius:   20px;
+  --tab-h:    64px;
+}
+
+html, body { height: 100%; background: var(--bg); font-family: var(--font); color: var(--text); overscroll-behavior: none; }
+
+/* ── LAYOUT ── */
+.app { display: flex; flex-direction: column; height: 100dvh; max-width: 430px; margin: 0 auto; position: relative; background: var(--bg); }
+
+/* ── HEADER ── */
+.header { padding: 52px 22px 12px; display: flex; align-items: center; justify-content: space-between; }
+.header-greeting { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.header-date { font-size: 13px; color: var(--text2); margin-top: 2px; font-weight: 400; }
+.header-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--google)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: white; cursor: pointer; }
+
+/* ── SCROLL AREA ── */
+.scroll { flex: 1; overflow-y: auto; padding: 8px 0 calc(var(--tab-h) + 16px); scroll-behavior: smooth; }
+.scroll::-webkit-scrollbar { display: none; }
+
+/* ── PAGES ── */
+.page { display: none; animation: fadeUp 0.3s ease; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── SECTION ── */
+.section { padding: 0 18px; margin-bottom: 24px; }
+.sec-label { font-size: 11px; font-weight: 500; color: var(--text3); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+.sec-label-more { font-size: 11px; color: var(--accent2); letter-spacing: 0; text-transform: none; font-weight: 500; }
+
+/* ── WEATHER CARD ── */
+.weather-card {
+  margin: 0 18px 24px;
+  background: linear-gradient(145deg, #EEF0FF 0%, #E8EDFE 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  overflow: hidden;
+  position: relative;
+}
+.weather-card::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(255,190,69,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+.weather-main { padding: 22px 22px 16px; display: flex; align-items: flex-start; justify-content: space-between; }
+.weather-left {}
+.weather-loc { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.weather-loc svg { width: 12px; height: 12px; }
+.weather-temp { font-size: 64px; font-weight: 300; line-height: 1; letter-spacing: -3px; color: var(--text); }
+.weather-temp sup { font-size: 24px; letter-spacing: 0; font-weight: 400; vertical-align: super; }
+.weather-desc { font-size: 13px; color: var(--text2); margin-top: 8px; }
+.weather-stats { display: flex; gap: 14px; margin-top: 8px; }
+.weather-stat { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.weather-icon-big { font-size: 62px; line-height: 1; }
+.weather-week { display: flex; border-top: 1px solid var(--border); padding: 12px 22px; gap: 0; }
+.wday { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.wday-label { font-size: 10px; color: var(--text3); }
+.wday-icon { font-size: 16px; }
+.wday-temp { font-size: 12px; color: var(--text2); font-weight: 500; }
+
+/* ── AI CARD ── */
+.ai-card {
+  margin: 0 18px 24px;
+  background: linear-gradient(135deg, #EEEEFF 0%, #E8F0FF 100%);
+  border-radius: var(--radius);
+  border: 1px solid rgba(123,110,246,0.2);
+  padding: 18px 20px;
+}
+.ai-card-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+}
+.ai-card-title {
+  font-size: 13px; font-weight: 600; color: var(--accent2);
+  display: flex; align-items: center; gap: 6px;
+}
+.ai-refresh-btn {
+  background: white; border: 1px solid rgba(123,110,246,0.3); border-radius: 20px;
+  padding: 5px 14px; font-size: 12px; color: var(--accent2); cursor: pointer;
+  font-family: var(--font); font-weight: 500; transition: background 0.15s;
+}
+.ai-refresh-btn:active { background: var(--bg3); }
+
+/* ── EVENT CARD ── */
+.ev-card {
+  background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);
+  padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+}
+.ev-card:active { transform: scale(0.98); }
+.ev-card:hover { border-color: var(--border2); }
+.ev-dot { width: 4px; border-radius: 2px; align-self: stretch; flex-shrink: 0; min-height: 36px; }
+.ev-info { flex: 1; min-width: 0; }
+.ev-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev-meta { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.ev-time { font-size: 13px; color: var(--text2); font-family: var(--mono); flex-shrink: 0; }
+
+/* ── MAIL CARD ── */
+.mail-card {
+  background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);
+  padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+}
+.mail-card:active { transform: scale(0.98); }
+.mail-card:hover { border-color: var(--border2); }
+.mail-av { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+.mail-body { flex: 1; min-width: 0; }
+.mail-from { font-size: 13px; font-weight: 500; }
+.mail-subj { font-size: 13px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mail-prev { font-size: 11px; color: var(--text3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mail-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.mail-time { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+/* ── TEAMS CARD ── */
+.teams-card {
+  background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);
+  padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 8px; cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+}
+.teams-card:active { transform: scale(0.98); }
+.teams-av { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.teams-body { flex: 1; min-width: 0; }
+.teams-top { display: flex; justify-content: space-between; align-items: center; }
+.teams-name { font-size: 13px; font-weight: 500; }
+.teams-time { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.teams-ch { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.teams-msg { font-size: 13px; color: var(--text2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── NOTION CARD ── */
+.notion-card {
+  background: var(--bg2); border-radius: 16px; border: 1px solid var(--border);
+  overflow: hidden; margin-bottom: 8px;
+}
+.notion-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.notion-row:last-child { border-bottom: none; }
+.notion-row:active { background: var(--bg3); }
+.notion-check { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.notion-check.done { background: var(--notion); border-color: var(--notion); }
+.notion-check.done::after { content: '✓'; font-size: 11px; color: #fff; font-weight: 600; }
+.notion-name { flex: 1; font-size: 13px; }
+.notion-name.done { text-decoration: line-through; color: var(--text3); }
+.notion-due { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+/* ── CONNECT BANNER ── */
+.connect-banner {
+  background: var(--bg2); border: 1px dashed var(--border2); border-radius: 16px;
+  padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: border-color 0.2s; margin-bottom: 8px;
+}
+.connect-banner:hover { border-color: var(--accent); }
+.connect-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.connect-info { flex: 1; }
+.connect-title { font-size: 14px; font-weight: 500; }
+.connect-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.connect-arrow { color: var(--text3); font-size: 18px; }
+
+/* ── SETTINGS PAGE ── */
+.settings-item { background: var(--bg2); border-radius: 16px; border: 1px solid var(--border); padding: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: border-color 0.2s; }
+.settings-item:hover { border-color: var(--border2); }
+.settings-item:active { opacity: 0.8; }
+.settings-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.settings-info { flex: 1; }
+.settings-name { font-size: 14px; font-weight: 500; }
+.settings-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.settings-status { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+.status-on  { background: rgba(99,200,160,0.15); color: var(--notion); }
+.status-off { background: var(--bg3); color: var(--text3); }
+
+/* ── BOTTOM NAV ── */
+.bnav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px; height: var(--tab-h);
+  background: rgba(245,245,247,0.88); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 8px 8px; z-index: 100;
+}
+.bitem { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 4px; cursor: pointer; border-radius: 12px; transition: background 0.15s; position: relative; }
+.bitem:active { background: var(--bg3); }
+.bitem-icon { font-size: 22px; color: var(--text3); transition: color 0.2s, transform 0.2s; }
+.bitem-label { font-size: 10px; color: var(--text3); font-weight: 500; transition: color 0.2s; }
+.bitem.active .bitem-icon { color: var(--text); transform: translateY(-1px); }
+.bitem.active .bitem-label { color: var(--accent2); }
+.bitem-badge { position: absolute; top: 4px; right: calc(50% - 18px); background: var(--gmail); color: white; font-size: 9px; font-weight: 600; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* ── LOADING STATE ── */
+.loading { display: flex; align-items: center; justify-content: center; padding: 32px; color: var(--text3); font-size: 13px; gap: 8px; }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── CALENDAR PAGE ── */
+.cal-grid-wrap { padding: 0 18px; margin-bottom: 20px; }
+.cal-month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.cal-month-title { font-size: 18px; font-weight: 600; }
+.cal-nav-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border2); background: var(--bg2); color: var(--text2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.cal-dow { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; margin-bottom: 4px; }
+.cal-dow span { font-size: 11px; color: var(--text3); padding: 4px 0; }
+.cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; border-radius: 50%; cursor: pointer; color: var(--text2); position: relative; transition: background 0.15s; }
+.cal-day:hover { background: var(--bg3); }
+.cal-day.today { background: var(--accent); color: white; font-weight: 600; }
+.cal-day.muted { color: var(--text3); }
+.cal-day.has-ev::after { content:''; width:4px; height:4px; background: var(--google); border-radius:50%; position:absolute; bottom:3px; left:50%; transform:translateX(-50%); }
+.cal-day.today.has-ev::after { background: white; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: calc(var(--tab-h) + 20px); left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1C1C1E; color: white;
+  padding: 10px 20px; border-radius: 24px; font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+  z-index: 300; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── EMPTY STATE ── */
+.empty-state { padding: 24px 16px; text-align: center; color: var(--text3); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-greeting" id="greeting">안녕하세요 👋</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+    <div class="header-avatar" id="header-avatar" title="알림 허용">나</div>
+  </div>
+
+  <!-- SCROLL -->
+  <div class="scroll" id="scroll">
+
+    <!-- TODAY PAGE -->
+    <div class="page active" id="page-today">
+
+      <!-- 날씨 -->
+      <div class="weather-card" id="weather-card">
+        <div class="loading"><div class="spinner"></div> 날씨 불러오는 중...</div>
+      </div>
+
+      <!-- AI 브리핑 -->
+      <div class="ai-card">
+        <div class="ai-card-header">
+          <div class="ai-card-title">✨ AI 브리핑</div>
+          <button class="ai-refresh-btn" onclick="getAISummary()">분석하기</button>
+        </div>
+        <div id="ai-summary-content" style="font-size:13px;line-height:1.6;color:var(--text3);">
+          버튼을 눌러 오늘 알림을 AI가 요약해드려요
+        </div>
+      </div>
+
+      <!-- 오늘 일정 -->
+      <div class="section" id="events-section">
+        <div class="sec-label">
+          오늘 일정
+          <span class="sec-label-more" id="events-count">구글 캘린더</span>
+        </div>
+        <!-- 실제 데이터로 교체됨 -->
+        <div class="connect-banner" onclick="window.location.href='/api/auth/google'">
+          <div class="connect-icon" style="background:rgba(79,156,249,0.1);">📅</div>
+          <div class="connect-info">
+            <div class="connect-title">구글 캘린더 연동하기</div>
+            <div class="connect-desc">실제 일정을 자동으로 불러와요</div>
+          </div>
+          <div class="connect-arrow">›</div>
+        </div>
+      </div>
+
+      <!-- Gmail -->
+      <div class="section" id="gmail-section">
+        <div class="sec-label">
+          받은 메일
+          <span class="sec-label-more" style="color:var(--gmail);">Gmail</span>
+        </div>
+        <!-- 실제 데이터로 교체됨 -->
+        <div class="connect-banner" onclick="window.location.href='/api/auth/google'">
+          <div class="connect-icon" style="background:rgba(244,132,95,0.1);">✉️</div>
+          <div class="connect-info">
+            <div class="connect-title">Gmail 연동하기</div>
+            <div class="connect-desc">실제 메일을 바로 확인해요</div>
+          </div>
+          <div class="connect-arrow">›</div>
+        </div>
+      </div>
+
+      <!-- Teams -->
+      <div class="section" id="teams-section-today">
+        <div class="sec-label">
+          Teams 메시지
+          <span class="sec-label-more" style="color:var(--accent2);">Microsoft</span>
+        </div>
+        <!-- 실제 데이터로 교체됨 -->
+        <div class="connect-banner" onclick="window.location.href='/api/auth/microsoft'">
+          <div class="connect-icon" style="background:rgba(123,110,246,0.1);">💬</div>
+          <div class="connect-info">
+            <div class="connect-title">Teams 연동하기</div>
+            <div class="connect-desc">실제 메시지를 바로 확인해요</div>
+          </div>
+          <div class="connect-arrow">›</div>
+        </div>
+      </div>
+
+      <!-- 노션 할 일 -->
+      <div class="section">
+        <div class="sec-label">
+          노션 할 일
+          <span class="sec-label-more" style="color:var(--notion);">노션</span>
+        </div>
+        <div class="notion-card" id="notion-card">
+          <div class="notion-row">
+            <div class="notion-check"></div>
+            <span class="notion-name">노션을 연동하면 오늘 할 일이 표시돼요</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR PAGE -->
+    <div class="page" id="page-calendar">
+      <div class="cal-grid-wrap">
+        <div class="cal-month-nav">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+          <div class="cal-month-title" id="cal-month-title">2026년 6월</div>
+          <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-dow">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="cal-days" id="cal-days"></div>
+      </div>
+      <div class="section" id="cal-events-section">
+        <div class="sec-label">오늘 일정</div>
+        <div class="loading" id="cal-loading" style="display:none;"><div class="spinner"></div> 불러오는 중...</div>
+        <div class="connect-banner" id="cal-connect-banner" onclick="window.location.href='/api/auth/google'">
+          <div class="connect-icon" style="background:rgba(79,156,249,0.1);">📅</div>
+          <div class="connect-info">
+            <div class="connect-title">구글 캘린더 연동하면 실제 일정이 떠요</div>
+            <div class="connect-desc">Google OAuth 로그인 한 번으로 연결</div>
+          </div>
+          <div class="connect-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIL PAGE -->
+    <div class="page" id="page-mail">
+      <div class="section" id="mail-page-section">
+        <div class="sec-label">
+          받은 메일함
+          <span class="sec-label-more" id="mail-page-count" style="color:var(--gmail);">Gmail</span>
+        </div>
+        <div class="loading" id="mail-loading"><div class="spinner"></div> 불러오는 중...</div>
+        <div class="connect-banner" id="mail-connect-banner" onclick="window.location.href='/api/auth/google'">
+          <div class="connect-icon" style="background:rgba(244,132,95,0.1);">✉️</div>
+          <div class="connect-info">
+            <div class="connect-title">Gmail 연동하면 실제 메일이 여기 떠요</div>
+            <div class="connect-desc">Google OAuth 로그인 한 번으로 연결</div>
+          </div>
+          <div class="connect-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAMS PAGE -->
+    <div class="page" id="page-teams">
+      <div class="section" id="teams-page-section">
+        <div class="sec-label">
+          Teams
+          <span class="sec-label-more" id="teams-page-count" style="color:var(--accent2);">Microsoft</span>
+        </div>
+        <div class="loading" id="teams-loading"><div class="spinner"></div> 불러오는 중...</div>
+        <div class="connect-banner" id="teams-connect-banner" onclick="window.location.href='/api/auth/microsoft'">
+          <div class="connect-icon" style="background:rgba(123,110,246,0.1);">💬</div>
+          <div class="connect-info">
+            <div class="connect-title">Teams 연동하면 실제 메시지가 여기 떠요</div>
+            <div class="connect-desc">Microsoft OAuth 로그인 한 번으로 연결</div>
+          </div>
+          <div class="connect-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="section">
+        <div class="sec-label">연동 서비스</div>
+
+        <div class="settings-item" id="settings-google">
+          <div class="settings-icon" style="background:rgba(79,156,249,0.12);">📅</div>
+          <div class="settings-info">
+            <div class="settings-name">Google (캘린더 + Gmail)</div>
+            <div class="settings-desc">구글 계정으로 로그인</div>
+          </div>
+          <span class="settings-status status-off" id="status-google">연결 필요</span>
+        </div>
+
+        <div class="settings-item" id="settings-microsoft">
+          <div class="settings-icon" style="background:rgba(123,110,246,0.12);">💬</div>
+          <div class="settings-info">
+            <div class="settings-name">Microsoft Teams + Outlook</div>
+            <div class="settings-desc">Microsoft 계정으로 로그인</div>
+          </div>
+          <span class="settings-status status-off" id="status-microsoft">연결 필요</span>
+        </div>
+
+        <div class="settings-item" id="settings-notion">
+          <div class="settings-icon" style="background:rgba(99,200,160,0.12);">📝</div>
+          <div class="settings-info">
+            <div class="settings-name">노션</div>
+            <div class="settings-desc">API 키로 연결 (.env 설정)</div>
+          </div>
+          <span class="settings-status status-off" id="status-notion">연결 필요</span>
+        </div>
+
+        <div class="settings-item" style="cursor:default;">
+          <div class="settings-icon" style="background:rgba(255,190,69,0.12);">🌤</div>
+          <div class="settings-info">
+            <div class="settings-name">날씨 — Open-Meteo</div>
+            <div class="settings-desc">세종시 · API 키 불필요</div>
+          </div>
+          <span class="settings-status status-on">연결됨</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">알림 설정</div>
+        <div class="settings-item" id="settings-notif" onclick="requestNotifPermission()">
+          <div class="settings-icon" style="background:rgba(123,110,246,0.12);">🔔</div>
+          <div class="settings-info">
+            <div class="settings-name">브라우저 알림</div>
+            <div class="settings-desc" id="notif-desc">일정 10분 전, 새 메일 알림</div>
+          </div>
+          <span class="settings-status" id="status-notif" style="background:var(--bg3);color:var(--text3);">미설정</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="sec-label">앱 정보</div>
+        <div class="settings-item" style="cursor:default;">
+          <div class="settings-icon" style="background:var(--bg3);">ℹ️</div>
+          <div class="settings-info">
+            <div class="settings-name">My Assistant</div>
+            <div class="settings-desc">v2.0.0 · PWA · AI 탑재</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bnav">
+    <div class="bitem active" id="tab-today" onclick="switchTab('today')">
+      <div class="bitem-icon">🏠</div>
+      <div class="bitem-label">오늘</div>
+    </div>
+    <div class="bitem" id="tab-calendar" onclick="switchTab('calendar')">
+      <div class="bitem-icon">📅</div>
+      <div class="bitem-label">캘린더</div>
+    </div>
+    <div class="bitem" id="tab-mail" onclick="switchTab('mail')">
+      <div class="bitem-icon">✉️</div>
+      <div class="bitem-label">메일</div>
+      <div class="bitem-badge" id="badge-mail" style="display:none;"></div>
+    </div>
+    <div class="bitem" id="tab-teams" onclick="switchTab('teams')">
+      <div class="bitem-icon">💬</div>
+      <div class="bitem-label">Teams</div>
+      <div class="bitem-badge" id="badge-teams" style="display:none;background:var(--accent);"></div>
+    </div>
+    <div class="bitem" id="tab-settings" onclick="switchTab('settings')">
+      <div class="bitem-icon">⚙️</div>
+      <div class="bitem-label">설정</div>
+    </div>
+  </nav>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ── 날짜/인사 ──
+const now = new Date();
+const h = now.getHours();
+const greeting = h < 6 ? '좋은 새벽이에요 🌙' : h < 12 ? '좋은 아침이에요 ☀️' : h < 18 ? '안녕하세요 👋' : '좋은 저녁이에요 🌆';
+document.getElementById('greeting').textContent = greeting;
+const days = ['일','월','화','수','목','금','토'];
+document.getElementById('header-date').textContent =
+  `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+
+// ── 탭 전환 ──
+function switchTab(name) {
+  ['today','calendar','mail','teams','settings'].forEach(t => {
+    document.getElementById('page-'+t).classList.remove('active');
+    document.getElementById('tab-'+t).classList.remove('active');
+  });
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('scroll').scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'mail') loadMailPage();
+  if (name === 'teams') loadTeamsPage();
+}
+
+// ── 토스트 ──
+function showToast(msg, duration = 2800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── 색상 팔레트 헬퍼 ──
+const PALETTES = [
+  ['rgba(79,156,249,0.15)', 'var(--google)'],
+  ['rgba(244,132,95,0.15)', 'var(--gmail)'],
+  ['rgba(123,110,246,0.15)', 'var(--accent2)'],
+  ['rgba(99,200,160,0.15)', 'var(--notion)'],
+];
+function palette(name) { return PALETTES[name.charCodeAt(0) % 4]; }
+
+// ── 인증 상태 ──
+let authStatus = {};
+
+async function loadAuthStatus() {
+  try {
+    const r = await fetch('/api/auth/status');
+    authStatus = await r.json();
+    updateSettingsUI();
+    if (authStatus.google) { loadCalendarEvents(); loadGmailPreview(); }
+    if (authStatus.microsoft) loadTeamsPreview();
+    if (authStatus.notion) loadNotionTasks();
+    setupNotificationBadge();
+  } catch (_) {}
+}
+
+function updateSettingsUI() {
+  const setStatus = (id, on) => {
+    const el = document.getElementById('status-' + id);
+    if (!el) return;
+    el.className = 'settings-status ' + (on ? 'status-on' : 'status-off');
+    el.textContent = on ? '연결됨' : '연결 필요';
+  };
+
+  setStatus('google', authStatus.google);
+  setStatus('microsoft', authStatus.microsoft);
+  setStatus('notion', authStatus.notion);
+
+  if (authStatus.google) {
+    document.getElementById('settings-google').onclick = null;
+  } else {
+    document.getElementById('settings-google').onclick = () => window.location.href = '/api/auth/google';
+  }
+
+  if (authStatus.microsoft) {
+    document.getElementById('settings-microsoft').onclick = null;
+  } else {
+    document.getElementById('settings-microsoft').onclick = () => window.location.href = '/api/auth/microsoft';
+  }
+}
+
+// ── AI 요약 ──
+async function getAISummary() {
+  const el = document.getElementById('ai-summary-content');
+  el.innerHTML = '<div class="loading" style="padding:8px 0;"><div class="spinner"></div> AI 분석 중...</div>';
+  try {
+    const r = await fetch('/api/ai/summary', { method: 'POST' });
+    const d = await r.json();
+    if (d.error) {
+      el.innerHTML = `<p style="font-size:12px;color:var(--text3);">${d.error}</p>`;
+    } else {
+      el.innerHTML = `<p style="font-size:13px;line-height:1.65;color:var(--text);">${d.summary.replace(/\n/g, '<br>')}</p>`;
+    }
+  } catch (_) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--text3);">요약을 불러올 수 없어요</p>';
+  }
+}
+
+// ── 구글 캘린더 이벤트 (오늘) ──
+async function loadCalendarEvents() {
+  const section = document.getElementById('events-section');
+  try {
+    const r = await fetch('/api/google/calendar');
+    if (!r.ok) return;
+    const d = await r.json();
+    section.querySelectorAll('.ev-card').forEach(el => el.remove());
+    section.querySelector('.connect-banner')?.remove();
+
+    if (!d.items?.length) {
+      section.insertAdjacentHTML('beforeend', '<div class="empty-state">오늘 일정이 없어요 🎉</div>');
+      return;
+    }
+
+    const countEl = document.getElementById('events-count');
+    if (countEl) countEl.textContent = `${d.items.length}개`;
+
+    const secLabel = section.querySelector('.sec-label');
+    d.items.forEach(ev => {
+      const start = ev.start?.dateTime ? new Date(ev.start.dateTime) : null;
+      const time = start
+        ? `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
+        : '종일';
+      const dur = ev.start?.dateTime && ev.end?.dateTime
+        ? Math.round((new Date(ev.end.dateTime) - new Date(ev.start.dateTime)) / 60000)
+        : null;
+      const durStr = dur
+        ? (dur >= 60 ? `${Math.floor(dur/60)}시간 ${dur%60 ? dur%60+'분' : ''}`.trim() : `${dur}분`)
+        : '';
+      const card = document.createElement('div');
+      card.className = 'ev-card';
+      card.innerHTML = `
+        <div class="ev-dot" style="background:var(--google);"></div>
+        <div class="ev-info">
+          <div class="ev-name">${ev.summary || '(제목 없음)'}</div>
+          ${durStr ? `<div class="ev-meta">${durStr}</div>` : ''}
+        </div>
+        <div class="ev-time">${time}</div>`;
+      section.appendChild(card);
+    });
+
+    // 캘린더 페이지에도 반영
+    syncCalendarPageEvents(d.items);
+    // 알림 스케줄
+    scheduleCalendarReminders(d.items);
+  } catch (_) {}
+}
+
+function syncCalendarPageEvents(items) {
+  const section = document.getElementById('cal-events-section');
+  document.getElementById('cal-connect-banner')?.remove();
+  section.querySelectorAll('.ev-card').forEach(el => el.remove());
+  document.getElementById('cal-loading').style.display = 'none';
+  items.forEach(ev => {
+    const start = ev.start?.dateTime ? new Date(ev.start.dateTime) : null;
+    const time = start
+      ? `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`
+      : '종일';
+    const card = document.createElement('div');
+    card.className = 'ev-card';
+    card.innerHTML = `
+      <div class="ev-dot" style="background:var(--google);"></div>
+      <div class="ev-info"><div class="ev-name">${ev.summary || '(제목 없음)'}</div></div>
+      <div class="ev-time">${time}</div>`;
+    section.appendChild(card);
+  });
+}
+
+// ── Gmail 오늘 탭 미리보기 ──
+async function loadGmailPreview() {
+  const section = document.getElementById('gmail-section');
+  try {
+    const r = await fetch('/api/google/gmail');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    section.querySelectorAll('.mail-card').forEach(el => el.remove());
+    section.querySelector('.connect-banner')?.remove();
+
+    if (!d.messages?.length) {
+      section.insertAdjacentHTML('beforeend', '<div class="empty-state">미읽음 메일이 없어요 ✅</div>');
+      return;
+    }
+
+    const badge = document.getElementById('badge-mail');
+    if (badge) { badge.style.display = 'flex'; badge.textContent = d.total; }
+
+    const secLabel = section.querySelector('.sec-label');
+    d.messages.slice(0, 3).forEach(msg => {
+      const fromRaw = msg.payload?.headers?.find(h => h.name === 'From')?.value || '?';
+      const fromName = fromRaw.replace(/<.*>/, '').replace(/"/g, '').trim() || fromRaw;
+      const subject = msg.payload?.headers?.find(h => h.name === 'Subject')?.value || '(제목 없음)';
+      const initial = fromName.charAt(0).toUpperCase();
+      const [bg, fg] = palette(fromName);
+      const card = document.createElement('div');
+      card.className = 'mail-card';
+      card.innerHTML = `
+        <div class="mail-av" style="background:${bg};color:${fg};">${initial}</div>
+        <div class="mail-body">
+          <div class="mail-from">${fromName}</div>
+          <div class="mail-subj">${subject}</div>
+        </div>
+        <div class="mail-right"><div class="unread-dot"></div></div>`;
+      secLabel.after(card);
+    });
+  } catch (_) {}
+}
+
+// ── Gmail 메일 탭 전체 ──
+let mailPageLoaded = false;
+async function loadMailPage() {
+  if (mailPageLoaded || !authStatus.google) {
+    document.getElementById('mail-loading').style.display = 'none';
+    return;
+  }
+  try {
+    const r = await fetch('/api/google/gmail');
+    document.getElementById('mail-loading').style.display = 'none';
+    document.getElementById('mail-connect-banner')?.remove();
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.messages?.length) {
+      document.getElementById('mail-page-section').insertAdjacentHTML('beforeend',
+        '<div class="empty-state">미읽음 메일이 없어요 ✅</div>');
+      return;
+    }
+    const countEl = document.getElementById('mail-page-count');
+    if (countEl) countEl.textContent = `${d.total} 안읽음`;
+    const secLabel = document.querySelector('#mail-page-section .sec-label');
+    d.messages.forEach(msg => {
+      const fromRaw = msg.payload?.headers?.find(h => h.name === 'From')?.value || '?';
+      const fromName = fromRaw.replace(/<.*>/, '').replace(/"/g, '').trim() || fromRaw;
+      const subject = msg.payload?.headers?.find(h => h.name === 'Subject')?.value || '(제목 없음)';
+      const dateRaw = msg.payload?.headers?.find(h => h.name === 'Date')?.value;
+      const time = dateRaw ? new Date(dateRaw).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '';
+      const initial = fromName.charAt(0).toUpperCase();
+      const [bg, fg] = palette(fromName);
+      const card = document.createElement('div');
+      card.className = 'mail-card';
+      card.innerHTML = `
+        <div class="mail-av" style="background:${bg};color:${fg};">${initial}</div>
+        <div class="mail-body">
+          <div class="mail-from">${fromName}</div>
+          <div class="mail-subj">${subject}</div>
+        </div>
+        <div class="mail-right">
+          <div class="mail-time">${time}</div>
+          <div class="unread-dot"></div>
+        </div>`;
+      secLabel.after(card);
+    });
+    mailPageLoaded = true;
+  } catch (_) {
+    document.getElementById('mail-loading').style.display = 'none';
+  }
+}
+
+// ── Teams 오늘 탭 미리보기 ──
+async function loadTeamsPreview() {
+  const section = document.getElementById('teams-section-today');
+  try {
+    const r = await fetch('/api/microsoft/teams');
+    if (!r.ok) return;
+    const d = await r.json();
+
+    section.querySelectorAll('.teams-card').forEach(el => el.remove());
+    section.querySelector('.connect-banner')?.remove();
+
+    const chats = (d.value || []).filter(c => c.lastMessagePreview).slice(0, 3);
+    if (!chats.length) {
+      section.insertAdjacentHTML('beforeend', '<div class="empty-state">새 Teams 메시지가 없어요</div>');
+      return;
+    }
+
+    const badge = document.getElementById('badge-teams');
+    if (badge) { badge.style.display = 'flex'; badge.textContent = chats.length; }
+
+    const secLabel = section.querySelector('.sec-label');
+    chats.forEach(chat => {
+      const lm = chat.lastMessagePreview;
+      const sender = lm.from?.user?.displayName || chat.topic || '알 수 없음';
+      const body = (lm.body?.content || '').replace(/<[^>]*>/g, '');
+      const time = new Date(lm.createdDateTime).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+      const initial = sender.charAt(0);
+      const card = document.createElement('div');
+      card.className = 'teams-card';
+      card.innerHTML = `
+        <div class="teams-av" style="background:rgba(123,110,246,0.2);color:var(--accent2);">${initial}</div>
+        <div class="teams-body">
+          <div class="teams-top"><span class="teams-name">${sender}</span><span class="teams-time">${time}</span></div>
+          <div class="teams-ch">${chat.topic || '💬 채팅'}</div>
+          <div class="teams-msg">${body}</div>
+        </div>`;
+      secLabel.after(card);
+    });
+  } catch (_) {}
+}
+
+// ── Teams 탭 전체 ──
+let teamsPageLoaded = false;
+async function loadTeamsPage() {
+  if (teamsPageLoaded || !authStatus.microsoft) {
+    document.getElementById('teams-loading').style.display = 'none';
+    return;
+  }
+  try {
+    const r = await fetch('/api/microsoft/teams');
+    document.getElementById('teams-loading').style.display = 'none';
+    document.getElementById('teams-connect-banner')?.remove();
+    if (!r.ok) return;
+    const d = await r.json();
+    const chats = (d.value || []).filter(c => c.lastMessagePreview);
+    if (!chats.length) {
+      document.getElementById('teams-page-section').insertAdjacentHTML('beforeend',
+        '<div class="empty-state">새 Teams 메시지가 없어요</div>');
+      return;
+    }
+    const countEl = document.getElementById('teams-page-count');
+    if (countEl) countEl.textContent = `${chats.length}개`;
+    const secLabel = document.querySelector('#teams-page-section .sec-label');
+    chats.forEach(chat => {
+      const lm = chat.lastMessagePreview;
+      const sender = lm.from?.user?.displayName || chat.topic || '알 수 없음';
+      const body = (lm.body?.content || '').replace(/<[^>]*>/g, '');
+      const time = new Date(lm.createdDateTime).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'});
+      const initial = sender.charAt(0);
+      const card = document.createElement('div');
+      card.className = 'teams-card';
+      card.innerHTML = `
+        <div class="teams-av" style="background:rgba(123,110,246,0.2);color:var(--accent2);">${initial}</div>
+        <div class="teams-body">
+          <div class="teams-top"><span class="teams-name">${sender}</span><span class="teams-time">${time}</span></div>
+          <div class="teams-ch">${chat.topic || '💬 채팅'}</div>
+          <div class="teams-msg">${body}</div>
+        </div>`;
+      secLabel.after(card);
+    });
+    teamsPageLoaded = true;
+  } catch (_) {
+    document.getElementById('teams-loading').style.display = 'none';
+  }
+}
+
+// ── Notion 할 일 ──
+async function loadNotionTasks() {
+  const container = document.getElementById('notion-card');
+  try {
+    const r = await fetch('/api/notion/tasks');
+    const d = await r.json();
+    if (!d.results?.length) return;
+    container.innerHTML = '';
+    d.results.forEach(page => {
+      const titleProp = Object.values(page.properties).find(v => v.type === 'title');
+      const title = titleProp?.title?.[0]?.plain_text || '(이름 없음)';
+      const statusProp = Object.values(page.properties).find(v => v.type === 'status' || v.type === 'select');
+      const statusVal = statusProp?.status?.name || statusProp?.select?.name || '';
+      const done = ['완료', 'Done', 'Complete', '완료됨'].includes(statusVal);
+      const row = document.createElement('div');
+      row.className = 'notion-row';
+      row.innerHTML = `
+        <div class="notion-check ${done ? 'done' : ''}"></div>
+        <span class="notion-name ${done ? 'done' : ''}">${title}</span>`;
+      container.appendChild(row);
+    });
+  } catch (_) {}
+}
+
+// ── 날씨 ──
+async function loadWeather() {
+  const card = document.getElementById('weather-card');
+  try {
+    const lat = 36.4800, lon = 127.2890;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=6`;
+    const d = await (await fetch(url)).json();
+    const cur = d.current;
+    const daily = d.daily;
+    const shortDays = ['일','월','화','수','목','금','토'];
+    let weekHtml = '';
+    for (let i = 1; i <= 5; i++) {
+      const dt = new Date(daily.time[i]);
+      weekHtml += `<div class="wday">
+        <div class="wday-label">${shortDays[dt.getDay()]}</div>
+        <div class="wday-icon">${weatherIcon(daily.weather_code[i])}</div>
+        <div class="wday-temp">${Math.round(daily.temperature_2m_max[i])}°</div>
+      </div>`;
+    }
+    card.innerHTML = `
+      <div class="weather-main">
+        <div class="weather-left">
+          <div class="weather-loc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            세종시
+          </div>
+          <div class="weather-temp">${Math.round(cur.temperature_2m)}<sup>°</sup></div>
+          <div class="weather-desc">${weatherDesc(cur.weather_code)}</div>
+          <div class="weather-stats">
+            <div class="weather-stat">💧 ${cur.relative_humidity_2m}%</div>
+            <div class="weather-stat">💨 ${cur.wind_speed_10m}m/s</div>
+            <div class="weather-stat">☂️ ${cur.precipitation_probability}%</div>
+          </div>
+        </div>
+        <div class="weather-icon-big">${weatherIcon(cur.weather_code)}</div>
+      </div>
+      <div class="weather-week">${weekHtml}</div>`;
+  } catch(_) {
+    card.innerHTML = `<div class="loading">날씨를 불러올 수 없어요</div>`;
+  }
+}
+
+function weatherIcon(code) {
+  if (code === 0) return '☀️';
+  if (code <= 2) return '⛅';
+  if (code <= 3) return '☁️';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '❄️';
+  if (code <= 82) return '🌧️';
+  if (code <= 86) return '❄️';
+  return '⛈️';
+}
+
+function weatherDesc(code) {
+  if (code === 0) return '맑음';
+  if (code <= 2) return '구름 조금';
+  if (code <= 3) return '흐림';
+  if (code <= 48) return '안개';
+  if (code <= 57) return '이슬비';
+  if (code <= 67) return '비';
+  if (code <= 77) return '눈';
+  if (code <= 82) return '소나기';
+  return '뇌우';
+}
+
+// ── 캘린더 그리드 ──
+let calYear = now.getFullYear(), calMonth = now.getMonth();
+
+function renderCalendar() {
+  const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  document.getElementById('cal-month-title').textContent = `${calYear}년 ${months[calMonth]}`;
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const last = new Date(calYear, calMonth+1, 0).getDate();
+  let html = '';
+  for (let i = 0; i < first; i++) html += `<div class="cal-day muted"></div>`;
+  for (let d = 1; d <= last; d++) {
+    const isToday = d === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear();
+    html += `<div class="cal-day ${isToday ? 'today' : ''}">${d}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML = html;
+}
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+// ── 브라우저 알림 ──
+function showBrowserNotif(title, body, tag) {
+  if (Notification.permission !== 'granted') return;
+  const n = new Notification(title, { body, icon: '/icon-192.png', tag: tag || 'default' });
+  n.onclick = () => { window.focus(); n.close(); };
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    showToast('이 브라우저는 알림을 지원하지 않아요');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  setupNotificationBadge();
+  if (perm === 'granted') {
+    showToast('알림 허용됨 ✅');
+    showBrowserNotif('My Assistant', '알림이 설정되었어요! 일정 10분 전 알려드릴게요 🔔');
+    schedulePolling();
+  } else {
+    showToast('알림이 차단되었어요. 브라우저 설정에서 허용해주세요');
+  }
+}
+
+function setupNotificationBadge() {
+  const statusEl = document.getElementById('status-notif');
+  const descEl = document.getElementById('notif-desc');
+  if (!statusEl) return;
+  const perm = Notification.permission;
+  if (perm === 'granted') {
+    statusEl.className = 'settings-status status-on';
+    statusEl.textContent = '허용됨';
+    if (descEl) descEl.textContent = '일정 10분/30분 전, 새 메일 알림 활성화';
+    document.getElementById('settings-notif').onclick = () => showToast('알림이 이미 허용되어 있어요');
+  } else if (perm === 'denied') {
+    statusEl.className = 'settings-status status-off';
+    statusEl.textContent = '차단됨';
+    if (descEl) descEl.textContent = '브라우저 설정에서 허용해주세요';
+  } else {
+    statusEl.textContent = '미설정';
+  }
+}
+
+// 일정 알림 스케줄
+function scheduleCalendarReminders(events) {
+  if (Notification.permission !== 'granted') return;
+  events.forEach(ev => {
+    if (!ev.start?.dateTime) return;
+    const startTime = new Date(ev.start.dateTime);
+    [10, 30].forEach(min => {
+      const notifyAt = new Date(startTime - min * 60000);
+      const delay = notifyAt - Date.now();
+      if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
+        setTimeout(() => {
+          const t = startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+          showBrowserNotif(
+            `${min}분 후: ${ev.summary}`,
+            `${t}에 시작해요`,
+            'cal-' + ev.id
+          );
+        }, delay);
+      }
+    });
+  });
+}
+
+// 아침 브리핑 스케줄 (매일 09:00)
+function scheduleMorningBriefing() {
+  if (Notification.permission !== 'granted') return;
+  const target = new Date();
+  target.setHours(9, 0, 0, 0);
+  if (Date.now() > target.getTime()) target.setDate(target.getDate() + 1);
+  const delay = target - Date.now();
+  setTimeout(async () => {
+    try {
+      const r = await fetch('/api/ai/summary', { method: 'POST' });
+      const d = await r.json();
+      if (d.summary) {
+        showBrowserNotif('오늘의 AI 브리핑 ✨', d.summary.slice(0, 120), 'morning-briefing');
+      }
+    } catch (_) {}
+    scheduleMorningBriefing(); // 다음 날 재스케줄
+  }, delay);
+}
+
+// 5분마다 새 메일 체크
+let prevGmailCount = 0;
+function schedulePolling() {
+  if (Notification.permission !== 'granted') return;
+  setInterval(async () => {
+    if (!authStatus.google) return;
+    try {
+      const r = await fetch('/api/google/gmail');
+      const d = await r.json();
+      const count = d.total || 0;
+      if (prevGmailCount > 0 && count > prevGmailCount) {
+        showBrowserNotif(
+          '📬 새 Gmail',
+          `${count - prevGmailCount}개의 새 메일이 도착했어요`,
+          'new-gmail'
+        );
+      }
+      prevGmailCount = count;
+    } catch (_) {}
+  }, 5 * 60 * 1000);
+}
+
+// ── Service Worker 등록 ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// ── 초기화 ──
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('connected') === 'google') {
+  showToast('구글 연동 완료! ✅');
+  window.history.replaceState({}, '', '/');
+} else if (urlParams.get('connected') === 'microsoft') {
+  showToast('Microsoft 연동 완료! ✅');
+  window.history.replaceState({}, '', '/');
+}
+
+loadWeather();
+renderCalendar();
+loadAuthStatus();
+
+if (Notification.permission === 'granted') {
+  scheduleMorningBriefing();
+  schedulePolling();
+}
+</script>
+</body>
+</html>
